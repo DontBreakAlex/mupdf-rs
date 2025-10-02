@@ -149,6 +149,27 @@ impl TextPage {
         Ok(res)
     }
 
+    pub fn to_text_lossy(&self) -> Result<String, Error> {
+        let buf = Buffer::with_capacity(8192);
+
+        let out = Output::from_buffer(&buf);
+        unsafe {
+            ffi_try!(mupdf_print_stext_page_as_text(
+                context(),
+                out.inner.as_ptr(),
+                self.inner.as_ptr()
+            ))?
+        };
+        drop(out);
+        let inner = buf.into_inner();
+
+        let res =
+            String::from_utf8_lossy(unsafe { slice::from_raw_parts((*inner).data, (*inner).len) })
+                .to_string();
+
+        Ok(res)
+    }
+
     pub fn to_json(&self, scale: f32) -> Result<String, Error> {
         let mut buf = Buffer::with_capacity(8192);
 
